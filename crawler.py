@@ -117,7 +117,16 @@ def get_city_from_url(url):
     # cshaley - 10/17/2016
     # Make this regex instead?
     # Add error handling?
-    return url.split('/')[2].split('.')[0]
+    assert type(url) == str, "URL must be a string"
+    assert len(url) > 7, "string provided is too short to be a URL"
+    end = 0
+    for i, letter in enumerate(url):
+        if letter == '.':
+            end = i
+            break
+    if end == 0:
+        return None
+    return url[7:end]
 
 def get_attrs(lnk):
     """ Get attributes of an object that is for sale on craigslist from the link 
