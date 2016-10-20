@@ -112,18 +112,17 @@ def get_city_from_url(url):
     Returns
     -------
     city (string): The city from the subdomain of the URL
+    None if no city was detected
     """
-    # TODO: 
-    # cshaley - 10/17/2016
-    # Make this regex instead?
-    # Add error handling?
     assert type(url) == str, "URL must be a string"
     assert len(url) > 7, "string provided is too short to be a URL"
+    
     end = 0
     for i, letter in enumerate(url):
         if letter == '.':
             end = i
             break
+    
     if end == 0:
         return None
     return url[7:end]
