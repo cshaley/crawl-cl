@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup as bs
 import requests
 
-def get_links_by_state():
+def get_craigslist_urls_by_state():
     """ This function pulls all of the US State craigslist website cities from craigslist
     and returns them as a dictionary
     
@@ -12,8 +12,8 @@ def get_links_by_state():
     """
     
     # Get site
-    q = "https://www.craigslist.org/about/sites#US"
-    html = requests.get(q).text
+    global_site = "https://www.craigslist.org/about/sites#US"
+    html = requests.get(global_site).text
     
     # Make beautifulsoup object
     soup = bs(html, 'html.parser')
@@ -22,15 +22,15 @@ def get_links_by_state():
     div_list = soup.find_all('div')
     
     # cut div_list only to the correct class of div and split out unnecessary data
-    hrefs = [p for p in div_list if p.get('class') == [u'colmask']]
-    hrefs = str(hrefs[0]).split('<h4>')
-    hrefs2 = []
-    for h in hrefs:
-        hrefs2.append(h.split('</h4>'))
+    colmask_div = [p for p in div_list if p.get('class') == [u'colmask']]
+    colmask_div_h4s = str(colmask_div[0]).split('<h4>')
+    hrefs = []
+    for h in colmask_div_h4s:
+        hrefs.append(h.split('</h4>'))
     
     # Create states dictionary in the format {'state1':['city1_url', 'city2_url', ...], ...}
     states = {}
-    for html_split in hrefs2:
+    for html_split in hrefs:
         if len(html_split) == 2:
             states[html_split[0].lower()] = html_split[1]
     
@@ -42,7 +42,7 @@ def get_links_by_state():
         states[state] = [get_city_from_url(str(a.get("href"))) for a in links]
     return states
 
-def get_car_links(url):
+def get_sale_item_links(url):
     """ Gets item links from craigslist search results page
     Runs recursively for queries with more than 1 page of results
     
@@ -52,7 +52,7 @@ def get_car_links(url):
     
     Returns
     -------
-    test_list (list of strings): List of titles of pages
+    text_list (list of strings): List of titles of pages
     href_list (list of strings): List of links to pages
     """
     
@@ -67,17 +67,16 @@ def get_car_links(url):
     # find all links on page
     link_list = soup.find_all('a') 
     
-    # Find all car links 
-    car_list = [a for a in link_list 
-                 if str(a.get('class')) == "[u'hdrlnk']"]
-                 #if any(x in str(a) for x in search_strings)]
+    # Find all sale item links 
+    sale_item_list = [a for a in link_list 
+                      if str(a.get('class')) == "[u'hdrlnk']"]
     
     # Parse the page to get the title of and link to each item on the search results page
     text_list, href_list = [], []
-    for l in car_list:
-        if l.contents:
-            text_list.append(unicode(l.contents[0]))
-            href = l.get('href')
+    for html_a in sale_item_list:
+        if html_a.contents:
+            text_list.append(unicode(html_a.contents[0]))
+            href = html_a.get('href')
             if href.startswith("//"):
                 href = "http:{0}".format(href)
             elif href.startswith("http"):
@@ -95,10 +94,10 @@ def get_car_links(url):
         next_page = [a.get('href') for a in link_rels if a.get('rel')[0] == u'next'][0]
     except IndexError:
         return text_list, href_list
-    tl, hl = get_car_links(next_page)
+    tl, hl = get_sale_item_links(next_page)
     
     # Aggregate and return title list and link list
-    text_list+= tl
+    text_list += tl
     href_list += hl
     return text_list, href_list
 
@@ -131,10 +130,12 @@ def get_city_from_url(url):
     
     if start == 0 or end == 0:
         return None
-    
+    elif start > end:
+        print('ERROR: "." before "//" in URL')
+        raise
     return url[start:end]
-
-def get_attrs(lnk):
+    
+def get_sale_item_attrs(lnk):
     """ Get attributes of an object that is for sale on craigslist from the link 
     
     Parameters
@@ -143,7 +144,7 @@ def get_attrs(lnk):
     
     Returns
     -------
-    d (dictionary): Dictionary of attributes of the item for sale on craigslist
+    attrs (dictionary): Dictionary of attributes of the item for sale on craigslist
     """
     
     # load webpage
@@ -154,10 +155,7 @@ def get_attrs(lnk):
     
     # find all paragraphs and spans on page
     p_list = soup.find_all('p')
-    spans = soup.find_all('span')
-    
-    # store the short-form posting description
-    descr = soup.find('meta').get("content")
+    spans = soup.find_all('span') 
     
     # Set the price of the item from the attribute.
     # If price is not listed, set it to NaN.
@@ -167,17 +165,20 @@ def get_attrs(lnk):
         price = np.NaN
     
     # Get a list of the rest of the attributes of the item
-    attrs = [p for p in p_list if p.get('class') == [u"attrgroup"]]
-    attr_list = attrs[1].find_all('span')
+    raw_attrs = [p for p in p_list if p.get('class') == [u"attrgroup"]]
+    raw_attr_list = raw_attrs[1].find_all('span')
     
     # Create a dictionary of the attributes of the item in the format {'attribute': 'value', ...}
-    d = {}
-    d['Price'] = price
-    for attr in attr_list:
+    attrs = {}
+    attrs['Price'] = price
+    for attr in raw_attr_list:
         try:
-            d[attr.contents[0]] = attr.contents[1].contents[0]
+            attrs[attr.contents[0]] = attr.contents[1].contents[0]
         except IndexError:
             # If the attribute is listed but has no value, then ignore it
             pass
-    d['Description'] = descr
-    return d
+        
+    # store the short-form posting description
+    attrs['Description'] = soup.find('meta').get("content")
+    
+    return attrs
