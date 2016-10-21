@@ -68,8 +68,8 @@ def get_sale_item_links(url):
     link_list = soup.find_all('a') 
     
     # Find all sale item links 
-    sale_item_list = [a for a in link_list 
-                      if str(a.get('class')) == "[u'hdrlnk']"]
+    sale_item_list = [a for a in link_list
+                      if a.get('class') == ['hdrlnk']]
     
     # Parse the page to get the title of and link to each item on the search results page
     text_list, href_list = [], []
