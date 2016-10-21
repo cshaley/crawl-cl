@@ -156,6 +156,9 @@ def get_attrs(lnk):
     p_list = soup.find_all('p')
     spans = soup.find_all('span')
     
+    # store the short-form posting description
+    descr = soup.find('meta').get("content")
+    
     # Set the price of the item from the attribute.
     # If price is not listed, set it to NaN.
     try:
@@ -176,4 +179,5 @@ def get_attrs(lnk):
         except IndexError:
             # If the attribute is listed but has no value, then ignore it
             pass
+    d['Description'] = descr
     return d
