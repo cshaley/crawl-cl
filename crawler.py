@@ -75,7 +75,7 @@ def get_sale_item_links(url):
     text_list, href_list = [], []
     for html_a in sale_item_list:
         if html_a.contents:
-            text_list.append(unicode(html_a.contents[0]))
+            text_list.append(html_a.text.encode('utf-8'))
             href = html_a.get('href')
             if href.startswith("//"):
                 href = "http:{0}".format(href)
