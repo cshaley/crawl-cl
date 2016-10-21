@@ -149,6 +149,9 @@ def get_attrs(lnk):
     p_list = soup.find_all('p')
     spans = soup.find_all('span')
     
+    # store the extended posting description
+    sect = soup.find_all(id="postingbody")
+    
     # Set the price of the item from the attribute.
     # If price is not listed, set it to NaN.
     try:
@@ -163,6 +166,7 @@ def get_attrs(lnk):
     # Create a dictionary of the attributes of the item in the format {'attribute': 'value', ...}
     d = {}
     d['Price'] = price
+    d['Description'] = sect
     for attr in attr_list:
         try:
             d[attr.contents[0]] = attr.contents[1].contents[0]
