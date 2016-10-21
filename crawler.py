@@ -39,7 +39,7 @@ def get_links_by_state():
     for state in states.keys():
         soup = bs(states[state], 'html.parser')
         links = soup.find_all('a')
-        states[state] = [get_city_from_url(a.get("href")) for a in links]
+        states[state] = [get_city_from_url(str(a.get("href"))) for a in links]
     return states
 
 def get_car_links(url):
@@ -117,15 +117,22 @@ def get_city_from_url(url):
     assert type(url) == str, "URL must be a string"
     assert len(url) > 7, "string provided is too short to be a URL"
     
-    end = 0
+    start = 0
     for i, letter in enumerate(url):
-        if letter == '.':
+        if letter == '/' and url[i + 1] == '/':
+            start = i + 2
+            break
+    
+    end = 0
+    for i in range(start + 1, len(url)):
+        if url[i] == '.':
             end = i
             break
     
-    if end == 0:
+    if start == 0 or end == 0:
         return None
-    return url[7:end]
+    
+    return url[start:end]
 
 def get_attrs(lnk):
     """ Get attributes of an object that is for sale on craigslist from the link 
