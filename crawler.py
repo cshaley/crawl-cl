@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup as bs
+import re
 import requests
 
 def get_craigslist_urls_by_state():
@@ -116,24 +117,13 @@ def get_city_from_url(url):
     assert type(url) == str, "URL must be a string"
     assert len(url) > 7, "string provided is too short to be a URL"
     
-    start = 0
-    for i, letter in enumerate(url):
-        if letter == '/' and url[i + 1] == '/':
-            start = i + 2
-            break
+    regex_match = "^(http:)?(\/\/)?(([^.]+)\.)?craigslist\.org.*$"
+    city = re.match(match, url).group(4)
     
-    end = 0
-    for i in range(start + 1, len(url)):
-        if url[i] == '.':
-            end = i
-            break
-    
-    if start == 0 or end == 0:
-        return None
-    elif start > end:
-        print('ERROR: "." before "//" in URL')
+    if not city:
+        print("ERROR: URL is missing a subdomain (city) or is invalid! Please provide a valid URL.")
         raise
-    return url[start:end]
+    return city
     
 def get_sale_item_attrs(lnk):
     """ Get attributes of an object that is for sale on craigslist from the link 
