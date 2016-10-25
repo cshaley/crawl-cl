@@ -117,7 +117,7 @@ def get_city_from_url(url):
     assert type(url) == str, "URL must be a string"
     assert len(url) > 7, "string provided is too short to be a URL"
     
-    regex_match = "^(http:)?(\/\/)?(([^.]+)\.)?craigslist\.org.*$"
+    regex_match = "^(http[s]*:)?(\/\/)?(([^.]+)\.)?craigslist\.org.*$"
     city = re.match(match, url).group(4)
     
     if not city:
